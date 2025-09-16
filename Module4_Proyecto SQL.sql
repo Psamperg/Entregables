@@ -2,12 +2,13 @@
 --2.Muestra los nombres de todas las películas con una clasificación por edades de ‘Rʼ
 select film_id, title, release_year
 from film
+where rating = 'R'
 order by release_year;
 
 --3. Encuentra los nombres de los actores que tengan un “actor_idˮ entre 30 y 40.
 select *
 from actor
-where actor_id >= '30' and actor_id <= '40';
+where actor_id >= 30 and actor_id <= 40;
 
 --4. Obtén las películas cuyo idioma coincide con el idioma original.
 --Respuesta: La BBDD tiene valores nulos en lenguage orginal, por lo que no se puede realizar esta consulta. No obstante, se haría d ela siguiente manera: 
@@ -36,21 +37,22 @@ WHERE "last_name" = 'ALLEN';
 
 --7. Encuentra la cantidad total de películas en cada clasificación de la tabla “filmˮ y muestra la clasificación junto con el recuento.
 
-
-SELECT c."name", count(f.film_id)
-FROM film AS f
-INNER JOIN film_category AS fc
-    ON f.film_id = fc.film_id
-INNER JOIN category AS c
-    ON fc.category_id = c.category_id
-group by c."name";
+SELECT rating,
+       COUNT(*) AS total_peliculas
+FROM film
+GROUP BY rating
+ORDER BY total_peliculas DESC;
 
 --8.Encuentra el título de todas las películas que son ‘PG-13ʼ o tienen una duración mayor a 3 horas en la tabla film.
 
-select title, length as Duración, rating as PG_13
-from film
-where film.length>'3'and rating='PG-13'
-order by film.length asc;
+SELECT title,
+       length AS duracion_minutos,
+       rating
+FROM film
+WHERE rating = 'PG-13'
+   OR length > 180
+ORDER BY length ASC;
+
 
 --9.Encuentra la variabilidad de lo que costaría reemplazar las películas.
 
@@ -127,7 +129,7 @@ INNER JOIN film_category AS fc
     ON f.film_id = fc.film_id
 INNER JOIN category AS c
     ON fc.category_id = c.category_id
-   where c."name" = 'Comedy' and f.length > '180';
+   where c."name" = 'Comedy' and f.length > 180;
   
  --20. Encuentra las categorías de películas que tienen un promedio de duración superior a 110 minutos y muestra el nombre de la categoría junto con el promedio de duración.
   
@@ -200,11 +202,14 @@ having count(f.film_id) > '40';
 
 --29.Obtener todas las películas y, si están disponibles en el inventario, mostrar la cantidad disponible.
 
- select count(i.inventory_id)
-from film f 
-inner join inventory i 
-on f.film_id =i.film_id
-group by film_id ;
+ SELECT f.title,
+       COUNT(i.inventory_id) AS cantidad_disponible
+FROM film f
+LEFT JOIN inventory i
+    ON f.film_id = i.film_id
+GROUP BY f.film_id, f.title
+ORDER BY cantidad_disponible DESC;
+
 
 --30.Obtener los actores y el número de películas en las que ha actuado.
 
@@ -218,24 +223,26 @@ group by a.actor_id;
 
 --31.Obtener todas las películas y mostrar los actores que han actuado en ellas, incluso si algunas películas no tienen actores asociados.
 
-select f.title as titulo, concat(a.first_name,' ',a.last_name) as nombre_completo
-from film f 
-full join film_actor fa 
-on f.film_id =fa.film_id 
-inner join actor a
-on fa.actor_id =a.actor_id
-order by f.title;
+select f.title as titulo,
+       concat(a.first_name, ' ', a.last_name) as nombre_completo
+from film f
+left join film_actor fa 
+       on f.film_id = fa.film_id
+left join actor a 
+       on fa.actor_id = a.actor_id
+order by f.title, nombre_completo;
 
 --32.Obtener todos los actores y mostrar las películas en las que han actuado, incluso si algunos actores no han actuado en ninguna película.
 
 
-select concat(a.first_name,' ',a.last_name) as nombre_completo, f.title as titulo
-from film f 
-full join film_actor fa 
-on f.film_id =fa.film_id 
-inner join actor a
-on fa.actor_id =a.actor_id
-order by "nombre_completo" ;
+select concat(a.first_name, ' ', a.last_name) as nombre_completo,
+       f.title as titulo
+from actor a
+left join film_actor fa 
+       on a.actor_id = fa.actor_id
+left join film f 
+       on fa.film_id = f.film_id
+order by nombre_completo, titulo;
 
 --33. Obtener todas las películas que tenemos y todos los registros de alquiler.
 
@@ -249,14 +256,17 @@ order by F.title ;
 
 --34. Encuentra los 5 clientes que más dinero se hayan gastado con nosotros.
 
-select concat(c.first_name,' ',c.last_name) as cliente , p.amount as dinero_gastado
-from customer c 
+select concat(c.first_name, ' ', c.last_name) as cliente,
+       sum(p.amount) as dinero_gastado
+from customer c
 inner join rental r 
-on c.customer_id =r.rental_id 
+       on c.customer_id = r.customer_id
 inner join payment p 
-on r.rental_id =p.rental_id 
-order by p.amount desc
+       on r.rental_id = p.rental_id
+group by c.customer_id, c.first_name, c.last_name
+order by dinero_gastado desc
 limit 5;
+
 
 
 --35. Selecciona todos los actores cuyo primer nombre es 'Johnny'.
@@ -283,9 +293,10 @@ from actor a ;
 
 --39. Selecciona todos los actores y ordénalos por apellido en orden ascendente.
 
-select first_name as Nombre, last_name as Apellido 
-from actor a 
-order by last_name desc;
+select first_name as nombre, last_name as apellido
+from actor
+order by last_name asc, first_name asc;
+
 
 --40. Selecciona las primeras 5 películas de la tabla “filmˮ.
 
@@ -380,22 +391,27 @@ from ACTOR_NUM_PELICULAS;
 
 --49.Calcula el número total de alquileres realizados por cada cliente.
 
-select concat(c.first_name,' ',c.last_name) as cliente , count(r.rental_id)
-from customer c 
-inner join rental r 
-on c.customer_id =r.rental_id 
-group by concat(c.first_name,' ',c.last_name);
+select concat(c.first_name, ' ', c.last_name) as cliente,
+       count(r.rental_id) as total_alquileres
+from customer c
+left join rental r
+  on c.customer_id = r.customer_id
+group by c.customer_id, c.first_name, c.last_name
+order by total_alquileres desc;
+
 
 --50. Calcula la duración total de las películas en la categoría 'Action'.
 
-  select c."name", round(avg(f.length),2)
+  select c."name" as categoria,
+       sum(f.length) as duracion_total_minutos
 from film f
-INNER JOIN film_category AS fc
-    ON f.film_id = fc.film_id
-INNER JOIN category AS c
-    ON fc.category_id = c.category_id
- group by c."name" 
-having c."name" ='Action';
+inner join film_category fc 
+       on f.film_id = fc.film_id
+inner join category c 
+       on fc.category_id = c.category_id
+where c."name" = 'Action'
+group by c."name";
+
 
 --51.Crea una tabla temporal llamada “cliente_rentas_temporalˮ para almacenar el total de alquileres por cliente.
 
@@ -437,17 +453,21 @@ where concat(c.first_name,' ',c.last_name)='TAMMY SANDERS' and r.return_date is 
 --54. Encuentra los nombres de los actores que han actuado en al menos una película que pertenece a la categoría ‘Sci-Fiʼ. Ordena los resultados alfabéticamente por apellido.
 
 
-SELECT CONCAT(a.first_name, ' ', a.last_name) AS nombre_completo, 
-       COUNT(f.film_id) AS numero_peliculas
-FROM actor a
-INNER JOIN film_actor fa ON a.actor_id = fa.actor_id
-INNER JOIN film f ON f.film_id = fa.film_id
-INNER JOIN film_category fc ON fc.film_id = f.film_id
-INNER JOIN category c ON c.category_id = fc.category_id
-WHERE c."name" = 'Sci-Fi' 
-GROUP BY a.actor_id, a.first_name, a.last_name 
-HAVING COUNT(f.film_id) > 1 
-ORDER BY numero_peliculas DESC;
+select concat(a.first_name, ' ', a.last_name) as nombre_completo,
+       a.last_name as apellido
+from actor a
+inner join film_actor fa 
+       on a.actor_id = fa.actor_id
+inner join film f 
+       on f.film_id = fa.film_id
+inner join film_category fc 
+       on fc.film_id = f.film_id
+inner join category c 
+       on c.category_id = fc.category_id
+where c."name" = 'Sci-Fi'
+group by a.actor_id, a.first_name, a.last_name
+order by a.last_name asc, a.first_name asc;
+
 
 --55.Encuentra el nombre y apellido de los actores que han actuado en películas que se alquilaron después de que la película ‘Spartacus Cheaperʼ se alquilara por primera vez. Ordena los resultados alfabéticamente por apellido.
 
