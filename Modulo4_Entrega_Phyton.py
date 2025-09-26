@@ -21,14 +21,15 @@ for letra, valor in frecuencias.items():
 # 2.Dada una lista de números, obtén una nueva lista con el doble de cada valor. Usa la función map()
 lista=[1,2,3,4,6,7,19,34]
 
-def doble_valor(numeros): 
+def doble_valor(numero): 
     """
     Args:
     numeros(lista): lista de numeros
     Returns:
     lista: lista de numeros multiplicados por dos
     """
-    return numeros*2
+    return numero*2
+
 
 resultado = list(map(doble_valor, lista))
 print(resultado)
@@ -186,24 +187,13 @@ print(resultado)
 # %%
 # 10. Escribe una función que reciba una lista de números y calcule su promedio. Si la lista está vacía, lanza una excepción personalizada y maneja el error adecuadamente.
 
+class ListaVaciaError(Exception):
+    pass
+
 def media(lista_numeros):
-    """
-    Args:
-    lista_numeros(list): lista de numeros a calcular su promedio
-    Results:
-    float: promedio de la lista
-    """
-    try:
-        resultado=sum(lista_numeros)/ len(lista_numeros)
-    except ZeroDivisionError:
-        print(f'La lista está vacia')
-    return(resultado)
-
-lista_numeros=[4,5,6,7,88,97,6]
-
-resultado_ejercio=media(lista_numeros)
-print(resultado_ejercio)
-
+    if not lista_numeros:
+        raise ListaVaciaError("La lista está vacía, no se puede calcular la media")
+    return sum(lista_numeros) / len(lista_numeros)
 # %%
 # 11. Escribe un programa que pida al usuario que introduzca su edad. Si el usuario ingresa un valor no numérico o un valor fuera del rango esperado (por ejemplo, menor que 0 o mayor que 120, maneja las excepciones adecuadamente.
 
@@ -303,8 +293,11 @@ def palabras_con_letra(lista_palabras, letra):
         list: lista de palabras que comienzan con la letra indicada
     """
     # Función que verifica si una palabra empieza con la letra
+
     def empieza_con(palabra):
-        return pal
+        return palabra.lower().startswith(letra.lower())
+    return list(filter(empieza_con, lista_palabras))
+
 
         
 
@@ -467,7 +460,8 @@ def contar_caracteres(cadena):
     return len(cadena)
 
 # Ejemplo de uso
-texto
+texto = "Hola mundo"
+print(contar_caracteres(texto))
 
 
 # %%
@@ -623,17 +617,7 @@ print(buscar_empleado("Pilar Samper", empleados))
 print(buscar_empleado("Luis García", empleados))
 
 
-# %%
-# 33.Crea una función lambda que sume elementos correspondientes de dos listas dadas.
 
-# Definimos dos listas
-lista1 = [1, 2, 3, 4]
-lista2 = [10, 20, 30, 40]
-
-# Usamos lambda + map para sumar elemento a elemento
-suma_listas = list(map(lambda x, y: x + y, lista1, lista2))
-
-print(suma_listas)
 
 
 # %%
@@ -778,7 +762,7 @@ def procesar_texto(texto, opcion, *args):
     Args:
         texto (str): texto de entrada
         opcion (str): opción a aplicar ("contar", "reemplazar", "eliminar")
-        *args: argumen*
+        args: argumen
          """
     if opcion == "contar":
         return contar_palabras(texto)
